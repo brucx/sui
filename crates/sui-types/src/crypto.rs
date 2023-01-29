@@ -1492,6 +1492,7 @@ mod bcs_signable {
 
     impl BcsSignable for crate::messages::CommitteeInfoResponse {}
     impl BcsSignable for crate::messages::TransactionEffects {}
+    impl BcsSignable for crate::messages::TransactionEvents {}
     impl BcsSignable for crate::messages::TransactionData {}
     impl BcsSignable for crate::messages::SenderSignedData {}
     impl BcsSignable for crate::object::Object {}

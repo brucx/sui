@@ -8,6 +8,7 @@ use crate::crypto::{
     sha3_hash, AuthoritySignInfo, AuthoritySignature, AuthorityStrongQuorumSignInfo,
     Ed25519SuiSignature, EmptySignInfo, Signature, Signer, SuiSignatureInner, ToFromBytes,
 };
+use crate::digests::TransactionEventsDigest;
 use crate::gas::GasCostSummary;
 use crate::intent::{Intent, IntentMessage};
 use crate::message_envelope::{Envelope, Message, TrustedEnvelope, VerifiedEnvelope};
@@ -32,6 +33,7 @@ use move_core_types::{
     account_address::AccountAddress, identifier::Identifier, language_storage::TypeTag,
     value::MoveStructLayout,
 };
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use serde_with::Bytes;
@@ -1686,7 +1688,11 @@ pub type SignedTransaction = Envelope<SenderSignedData, AuthoritySignInfo>;
 pub type VerifiedSignedTransaction = VerifiedEnvelope<SenderSignedData, AuthoritySignInfo>;
 
 pub type CertifiedTransaction = Envelope<SenderSignedData, AuthorityStrongQuorumSignInfo>;
-pub type TxCertAndSignedEffects = (CertifiedTransaction, SignedTransactionEffects);
+pub type TxCertAndSignedEffects = (
+    CertifiedTransaction,
+    SignedTransactionEffects,
+    TransactionEvents,
+);
 
 pub type VerifiedCertificate = VerifiedEnvelope<SenderSignedData, AuthorityStrongQuorumSignInfo>;
 pub type TrustedCertificate = TrustedEnvelope<SenderSignedData, AuthorityStrongQuorumSignInfo>;
@@ -1795,6 +1801,7 @@ pub enum TransactionStatus {
     Executed(
         Option<AuthorityStrongQuorumSignInfo>,
         SignedTransactionEffects,
+        TransactionEvents,
     ),
 }
 
@@ -1808,7 +1815,7 @@ impl TransactionStatus {
 
     pub fn into_effects_for_testing(self) -> SignedTransactionEffects {
         match self {
-            Self::Executed(_, e) => e,
+            Self::Executed(_, e, _) => e,
             _ => unreachable!("Incorrect response type"),
         }
     }
@@ -1821,11 +1828,12 @@ impl PartialEq for TransactionStatus {
                 Self::Signed(s2) => s1.epoch == s2.epoch,
                 _ => false,
             },
-            Self::Executed(c1, e1) => match other {
-                Self::Executed(c2, e2) => {
+            Self::Executed(c1, e1, ev1) => match other {
+                Self::Executed(c2, e2, ev2) => {
                     c1.as_ref().map(|a| a.epoch) == c2.as_ref().map(|a| a.epoch)
                         && e1.epoch() == e2.epoch()
                         && e1.digest() == e2.digest()
+                        && ev1.digest() == ev2.digest()
                 }
                 _ => false,
             },
@@ -1846,16 +1854,24 @@ pub struct TransactionInfoResponse {
 #[derive(Clone, Debug)]
 pub enum VerifiedTransactionInfoResponse {
     Signed(VerifiedSignedTransaction),
-    ExecutedWithCert(VerifiedCertificate, VerifiedSignedTransactionEffects),
-    ExecutedWithoutCert(VerifiedTransaction, VerifiedSignedTransactionEffects),
+    ExecutedWithCert(
+        VerifiedCertificate,
+        VerifiedSignedTransactionEffects,
+        TransactionEvents,
+    ),
+    ExecutedWithoutCert(
+        VerifiedTransaction,
+        VerifiedSignedTransactionEffects,
+        TransactionEvents,
+    ),
 }
 
 impl VerifiedTransactionInfoResponse {
     pub fn is_executed(&self) -> bool {
         match self {
             VerifiedTransactionInfoResponse::Signed(_) => false,
-            VerifiedTransactionInfoResponse::ExecutedWithCert(_, _)
-            | VerifiedTransactionInfoResponse::ExecutedWithoutCert(_, _) => true,
+            VerifiedTransactionInfoResponse::ExecutedWithCert(_, _, _)
+            | VerifiedTransactionInfoResponse::ExecutedWithoutCert(_, _, _) => true,
         }
     }
 }
@@ -1864,11 +1880,13 @@ impl VerifiedTransactionInfoResponse {
 pub struct HandleCertificateResponse {
     pub signed_effects: SignedTransactionEffects,
     // TODO: Add a case for finalized transaction.
+    pub events: TransactionEvents,
 }
 
 #[derive(Clone, Debug)]
 pub struct VerifiedHandleCertificateResponse {
     pub signed_effects: VerifiedSignedTransactionEffects,
+    pub events: TransactionEvents,
 }
 
 #[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize)]
@@ -2470,8 +2488,8 @@ pub struct TransactionEffects {
     /// The updated gas object reference. Have a dedicated field for convenient access.
     /// It's also included in mutated.
     pub gas_object: (ObjectRef, Owner),
-    /// The events emitted during execution. Note that only successful transactions emit events
-    pub events: Vec<Event>,
+    /// The events emitted during execution.
+    pub events_summary: EventsSummary,
     /// The set of transaction digests this transaction depends on.
     pub dependencies: Vec<TransactionDigest>,
 }
@@ -2535,8 +2553,32 @@ impl TransactionEffects {
             unwrapped_object_count: self.unwrapped.len(),
             deleted_object_count: self.deleted.len(),
             wrapped_object_count: self.wrapped.len(),
-            event_count: self.events.len(),
+            event_count: self.events_summary.event_count,
             dependency_count: self.dependencies.len(),
+        }
+    }
+}
+
+#[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize, JsonSchema)]
+pub struct EventsSummary {
+    pub event_count: usize,
+    pub digest: Option<TransactionEventsDigest>,
+}
+
+#[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize, Default)]
+pub struct TransactionEvents {
+    pub data: Vec<Event>,
+}
+
+impl TransactionEvents {
+    pub fn summary(&self) -> EventsSummary {
+        EventsSummary {
+            event_count: self.data.len(),
+            digest: if self.data.is_empty() {
+                None
+            } else {
+                Some(self.digest())
+            },
         }
     }
 }
@@ -2546,6 +2588,30 @@ impl Message for TransactionEffectsDigest {
 
     fn digest(&self) -> Self::DigestType {
         *self
+    }
+
+    fn verify(&self) -> SuiResult {
+        Ok(())
+    }
+}
+
+impl Message for TransactionEventsDigest {
+    type DigestType = TransactionEventsDigest;
+
+    fn digest(&self) -> Self::DigestType {
+        *self
+    }
+
+    fn verify(&self) -> SuiResult {
+        Ok(())
+    }
+}
+
+impl Message for TransactionEvents {
+    type DigestType = TransactionEventsDigest;
+
+    fn digest(&self) -> Self::DigestType {
+        TransactionEventsDigest::new(sha3_hash(self))
     }
 
     fn verify(&self) -> SuiResult {
@@ -2638,7 +2704,10 @@ impl Default for TransactionEffects {
                 random_object_ref(),
                 Owner::AddressOwner(SuiAddress::default()),
             ),
-            events: Vec::new(),
+            events_summary: EventsSummary {
+                event_count: 0,
+                digest: None,
+            },
             dependencies: Vec::new(),
         }
     }
@@ -3087,7 +3156,13 @@ pub type IsTransactionExecutedLocally = bool;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum ExecuteTransactionResponse {
-    EffectsCert(Box<(FinalizedEffects, IsTransactionExecutedLocally)>),
+    EffectsCert(
+        Box<(
+            FinalizedEffects,
+            TransactionEvents,
+            IsTransactionExecutedLocally,
+        )>,
+    ),
 }
 
 #[derive(Clone, Debug)]
@@ -3098,6 +3173,7 @@ pub struct QuorumDriverRequest {
 #[derive(Debug, Clone)]
 pub struct QuorumDriverResponse {
     pub effects_cert: VerifiedCertifiedTransactionEffects,
+    pub events: TransactionEvents,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
