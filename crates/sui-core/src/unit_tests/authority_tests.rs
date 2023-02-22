@@ -2703,6 +2703,7 @@ async fn test_authority_persist() {
             None,
             EpochMetrics::new(&registry),
             Some(Default::default()),
+            store.clone(),
         );
 
         let checkpoint_store_path = dir.join(format!("DB_{:?}", ObjectID::random()));
@@ -4535,22 +4536,35 @@ async fn test_blocked_move_calls() {
 #[tokio::test]
 async fn test_tallying_rule_score_updates() {
     let seed = [1u8; 32];
-    let (authorities, committee) = make_committee_key(&mut StdRng::from_seed(seed));
+    let mut rng = StdRng::from_seed(seed);
+    let (authorities, committee) = make_committee_key(&mut rng);
     let auth_0_name = authorities[0].public().into();
     let auth_1_name = authorities[1].public().into();
     let auth_2_name = authorities[2].public().into();
     let auth_3_name = authorities[3].public().into();
     let dir = env::temp_dir();
-    let epoch_store_path = dir.join(format!("DB_{:?}", ObjectID::random()));
-    fs::create_dir(&epoch_store_path).unwrap();
+    let path = dir.join(format!("DB_{:?}", ObjectID::random()));
+    fs::create_dir(&path).unwrap();
     let metrics = EpochMetrics::new(&Registry::new());
+
+    let network_config = sui_config::builder::ConfigBuilder::new(&dir)
+        .rng(rng)
+        .build();
+    let genesis = network_config.genesis;
+    let store = Arc::new(
+        AuthorityStore::open_with_committee_for_testing(&path, None, &committee, &genesis)
+            .await
+            .unwrap(),
+    );
+
     let epoch_store = AuthorityPerEpochStore::new(
         auth_0_name,
         committee.clone(),
-        &epoch_store_path,
+        &path,
         None,
         metrics.clone(),
         Some(Default::default()),
+        store,
     );
 
     let get_stored_seq_num_and_counter = |auth_name: &AuthorityName| {
