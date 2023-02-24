@@ -2560,6 +2560,7 @@ impl TransactionEffects {
 }
 
 #[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct EventsSummary {
     pub event_count: usize,
     pub digest: Option<TransactionEventsDigest>,
