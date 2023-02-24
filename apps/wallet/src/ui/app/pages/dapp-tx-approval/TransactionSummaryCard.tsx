@@ -1,6 +1,7 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+import { useFormatCoin } from '@mysten/core';
 import { formatAddress } from '@mysten/sui.js';
 
 import { MiniNFT } from './MiniNFT';
@@ -8,12 +9,7 @@ import { SummaryCard } from './SummaryCard';
 import AccountAddress from '_components/account-address';
 import ExplorerLink from '_components/explorer-link';
 import { ExplorerLinkType } from '_components/explorer-link/ExplorerLinkType';
-import {
-    useFormatCoin,
-    useGetNFTMeta,
-    useAppSelector,
-    useTransactionSummary,
-} from '_hooks';
+import { useGetNFTMeta, useAppSelector, useTransactionSummary } from '_hooks';
 import { GAS_TYPE_ARG } from '_redux/slices/sui-objects/Coin';
 
 import type { CoinsMetaProps } from '../../helpers/getEventsSummary';
