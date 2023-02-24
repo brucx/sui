@@ -256,7 +256,9 @@ async fn test_dev_inspect_object_by_bytes() {
         init_state_with_ids_and_object_basics_with_fullnode(vec![(sender, gas_object_id)]).await;
 
     // test normal call
-    let DevInspectResults { effects, results } = call_dev_inspect(
+    let DevInspectResults {
+        effects, results, ..
+    } = call_dev_inspect(
         &fullnode,
         &sender,
         &object_basics.0,
@@ -323,7 +325,9 @@ async fn test_dev_inspect_object_by_bytes() {
     assert_eq!(actual_gas_used, dev_inspect_gas_summary);
 
     // use the created object directly, via its bytes
-    let DevInspectResults { effects, results } = call_dev_inspect(
+    let DevInspectResults {
+        effects, results, ..
+    } = call_dev_inspect(
         &fullnode,
         &sender,
         &object_basics.0,
@@ -427,7 +431,9 @@ async fn test_dev_inspect_unowned_object() {
     assert_eq!(created_object.owner, Owner::AddressOwner(bob));
 
     // alice uses the object with dev inspect, despite not being the owner
-    let DevInspectResults { effects, results } = call_dev_inspect(
+    let DevInspectResults {
+        effects, results, ..
+    } = call_dev_inspect(
         &fullnode,
         &alice,
         &object_basics.0,
@@ -528,7 +534,9 @@ async fn test_dev_inspect_dynamic_field() {
     assert!(matches!(results, Err(e) if e.contains("kind: CircularObjectOwnership")));
 
     // add a dynamic field to an object
-    let DevInspectResults { effects, results } = call_dev_inspect(
+    let DevInspectResults {
+        effects, results, ..
+    } = call_dev_inspect(
         &fullnode,
         &sender,
         &object_basics.0,
