@@ -1289,3 +1289,16 @@ Aborts if validator metadata is valid
 
 
 </details>
+
+<details>
+<summary>Specification</summary>
+
+
+
+<pre><code><b>pragma</b> opaque;
+<b>aborts_if</b> [abstract] <b>true</b>;
+</code></pre>
+
+
+
+</details>
