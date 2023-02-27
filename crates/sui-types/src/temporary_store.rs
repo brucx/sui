@@ -16,6 +16,7 @@ use tracing::trace;
 use crate::coin::Coin;
 use crate::committee::EpochId;
 use crate::event::BalanceChangeType;
+use crate::message_envelope::Message;
 use crate::messages::TransactionEvents;
 use crate::storage::SingleTxContext;
 use crate::sui_system_state::{get_sui_system_state, SuiSystemState};
@@ -582,7 +583,11 @@ impl<S> TemporaryStore<S> {
             unwrapped_then_deleted,
             wrapped,
             gas_object: updated_gas_object_info,
-            events_summary: inner.events.summary(),
+            events_digest: if inner.events.data.is_empty() {
+                None
+            } else {
+                Some(inner.events.digest())
+            },
             dependencies: transaction_dependencies,
         };
         (inner, effects)
