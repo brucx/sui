@@ -175,9 +175,13 @@ export const ValidatorSet = object({
   validator_stake: number(),
   delegation_stake: number(),
   active_validators: array(Validator),
-  pending_validators: array(Validator),
+  pending_validators: object({
+    contents: object({
+      id: string(),
+      size: number(),
+    }),
+  }),
   pending_removals: array(number()),
-  next_epoch_validators: array(ValidatorMetaData),
   // TODO: Remove this after 0.28.0 is released
   pending_delegation_switches: optional(
     object({ contents: array(ValidatorPair) }),
@@ -305,6 +309,21 @@ export const MoveActiveValidator = object({
   fields: MoveActiveValidatorFields,
 });
 
+export const MovePendingValidators = object({
+  type: string(),
+  fields: object({
+    contents: object({
+      type: string(),
+      fields: object({
+        id: object({
+          id: string(),
+        }),
+        size: string(),
+      }),
+    }),
+  }),
+});
+
 export const MoveStakingPoolMappings = object({
   type: string(),
   fields: object({
@@ -317,11 +336,10 @@ export const MoveStakingPoolMappings = object({
 
 export const MoveValidatorsFieldsClass = object({
   active_validators: array(MoveActiveValidator),
-  next_epoch_validators: array(MoveNextEpochValidator),
   // TODO: Remove this after 0.28.0 is released
   pending_delegation_switches: optional(ValidatorReportRecords),
   pending_removals: array(number()),
-  pending_validators: array(number()),
+  pending_validators: MovePendingValidators,
   quorum_stake_threshold: optional(string()),
   staking_pool_mappings: MoveStakingPoolMappings,
   total_delegation_stake: string(),

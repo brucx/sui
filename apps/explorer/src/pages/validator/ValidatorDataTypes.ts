@@ -76,10 +76,8 @@ export interface ValidatorsClass {
 
 export interface ValidatorsFieldsClass {
     active_validators: ActiveValidator[];
-    next_epoch_validators: NextEpochValidator[];
     pending_delegation_switches: ValidatorReportRecords;
     pending_removals: number[];
-    pending_validators: number[];
     quorum_stake_threshold: string;
     total_delegation_stake: string;
     total_validator_stake: string;

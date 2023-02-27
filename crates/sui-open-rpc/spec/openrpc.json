@@ -6907,7 +6907,6 @@
         "required": [
           "active_validators",
           "delegation_stake",
-          "next_epoch_validators",
           "pending_removals",
           "pending_validators",
           "staking_pool_mappings",
@@ -6925,12 +6924,6 @@
             "format": "uint64",
             "minimum": 0.0
           },
-          "next_epoch_validators": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ValidatorMetadata"
-            }
-          },
           "pending_removals": {
             "type": "array",
             "items": {
@@ -6940,10 +6933,7 @@
             }
           },
           "pending_validators": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Validator"
-            }
+            "$ref": "#/components/schemas/TableVec"
           },
           "staking_pool_mappings": {
             "$ref": "#/components/schemas/Table"

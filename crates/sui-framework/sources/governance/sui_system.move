@@ -170,10 +170,6 @@ module sui::sui_system {
         commission_rate: u64,
         ctx: &mut TxContext,
     ) {
-        assert!(
-            validator_set::next_epoch_validator_count(&self.validators) < self.parameters.max_validator_candidate_count,
-            ELimitExceeded,
-        );
         let stake_amount = coin::value(&stake);
         assert!(
             stake_amount >= self.parameters.min_validator_stake,
