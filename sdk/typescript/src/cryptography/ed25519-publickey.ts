@@ -71,6 +71,7 @@ export class Ed25519PublicKey {
     let tmp = new Uint8Array(PUBLIC_KEY_SIZE + 1);
     tmp.set([SIGNATURE_SCHEME_TO_FLAG['ED25519']]);
     tmp.set(this.toBytes(), 1);
+    // Each hex char represents half a byte, hence hex address doubles the length
     return sha3.sha3_256(tmp).slice(0, SUI_ADDRESS_LENGTH * 2);
   }
 }
