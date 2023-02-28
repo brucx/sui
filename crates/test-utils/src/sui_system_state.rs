@@ -18,13 +18,13 @@ use sui_types::SUI_SYSTEM_STATE_OBJECT_ID;
 
 pub fn test_validatdor_metadata(
     sui_address: SuiAddress,
-    pubkey_bytes: AuthorityPublicKeyBytes,
+    protocol_pubkey_bytes: AuthorityPublicKeyBytes,
     net_address: Vec<u8>,
 ) -> ValidatorMetadata {
     let network_keypair: NetworkKeyPair = get_key_pair().1;
     ValidatorMetadata {
         sui_address,
-        pubkey_bytes: pubkey_bytes.as_bytes().to_vec(),
+        protocol_pubkey_bytes: protocol_pubkey_bytes.as_bytes().to_vec(),
         network_pubkey_bytes: network_keypair.public().as_bytes().to_vec(),
         worker_pubkey_bytes: vec![],
         proof_of_possession_bytes: vec![],
@@ -40,6 +40,14 @@ pub fn test_validatdor_metadata(
         next_epoch_delegation: 1,
         next_epoch_gas_price: 1,
         next_epoch_commission_rate: 0,
+        next_epoch_protocol_pubkey_bytes: None,
+        next_epoch_proof_of_possession: None,
+        next_epoch_network_pubkey_bytes: None,
+        next_epoch_worker_pubkey_bytes: None,
+        next_epoch_net_address: None,
+        next_epoch_p2p_address: None,
+        next_epoch_consensus_address: None,
+        next_epoch_worker_address: None,
     }
 }
 
@@ -56,14 +64,14 @@ pub fn test_staking_pool(sui_balance: u64) -> StakingPool {
 }
 
 pub fn test_validator(
-    pubkey_bytes: AuthorityPublicKeyBytes,
+    protocol_pubkey_bytes: AuthorityPublicKeyBytes,
     net_address: Vec<u8>,
     stake_amount: u64,
     delegated_amount: u64,
 ) -> Validator {
-    let sui_address = SuiAddress::from(&pubkey_bytes);
+    let sui_address = SuiAddress::from(&protocol_pubkey_bytes);
     Validator {
-        metadata: test_validatdor_metadata(sui_address, pubkey_bytes, net_address),
+        metadata: test_validatdor_metadata(sui_address, protocol_pubkey_bytes, net_address),
         voting_power: stake_amount,
         stake_amount,
         pending_stake: 1,

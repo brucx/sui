@@ -22,7 +22,7 @@ import { AuthorityName } from './transactions';
 
 export const ValidatorMetaData = object({
   sui_address: SuiAddress,
-  pubkey_bytes: array(number()),
+  protocol_pubkey_bytes: array(number()),
   network_pubkey_bytes: array(number()),
   worker_pubkey_bytes: array(number()),
   proof_of_possession_bytes: array(number()),
@@ -38,6 +38,14 @@ export const ValidatorMetaData = object({
   next_epoch_delegation: number(),
   next_epoch_gas_price: number(),
   next_epoch_commission_rate: number(),
+  next_epoch_protocol_pubkey_bytes: nullable(array(number())),
+  next_epoch_proof_of_possession: nullable(array(number())),
+  next_epoch_network_pubkey_bytes: nullable(array(number())),
+  next_epoch_worker_pubkey_bytes: nullable(array(number())),
+  next_epoch_net_address: nullable(array(number())),
+  next_epoch_p2p_address: nullable(array(number())),
+  next_epoch_consensus_address: nullable(array(number())),
+  next_epoch_worker_address: nullable(array(number())),
 });
 
 export type DelegatedStake = Infer<typeof DelegatedStake>;
@@ -279,10 +287,18 @@ export const MoveNextEpochValidatorFields = object({
   next_epoch_gas_price: string(),
   next_epoch_stake: string(),
   proof_of_possession: array(number()),
-  pubkey_bytes: array(number()),
+  protocol_pubkey_bytes: array(number()),
   sui_address: string(),
   worker_address: array(number()),
   worker_pubkey_bytes: array(number()),
+  next_epoch_protocol_pubkey_bytes: nullable(array(number())),
+  next_epoch_proof_of_possession: nullable(array(number())),
+  next_epoch_network_pubkey_bytes: nullable(array(number())),
+  next_epoch_worker_pubkey_bytes: nullable(array(number())),
+  next_epoch_net_address: nullable(array(number())),
+  next_epoch_p2p_address: nullable(array(number())),
+  next_epoch_consensus_address: nullable(array(number())),
+  next_epoch_worker_address: nullable(array(number())),
 });
 
 const MoveNextEpochValidator = object({

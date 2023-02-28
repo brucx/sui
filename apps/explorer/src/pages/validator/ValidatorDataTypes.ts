@@ -166,7 +166,7 @@ export interface NextEpochValidatorFields {
     next_epoch_gas_price: string;
     next_epoch_stake: string;
     proof_of_possession: number[];
-    pubkey_bytes: number[];
+    protocol_pubkey_bytes: number[];
     sui_address: string;
     worker_address: number[];
     worker_pubkey_bytes: number[];
