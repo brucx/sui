@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.7.0
+
+### Minor Changes
+
+- 5c3b00cde: Add object id to staking pool and pool id to staked sui.
+
 ## 0.6.1
 
 ### Patch Changes
